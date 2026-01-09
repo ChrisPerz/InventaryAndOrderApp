@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;    
 public class LogiTrackContext : DbContext
 {
     public DbSet<Order> Orders { get; set; }
