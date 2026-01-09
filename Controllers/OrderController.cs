@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 [ApiController]
@@ -12,6 +13,7 @@ public class OrderController : ControllerBase
         _context = context;
     }
     [HttpGet]
+    [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetAllOrders()
     {
         var orders = await _context.Orders
@@ -80,6 +82,7 @@ public class OrderController : ControllerBase
         return Ok(dto);
     }
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Manager")]
     public async Task<IActionResult> DeleteOrder(int id)
     {
         var order = await _context.Orders.FindAsync(id);

@@ -1,5 +1,6 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;    
-public class LogiTrackContext : DbContext
+public class LogiTrackContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Order> Orders { get; set; }
     public DbSet<InventoryItem> InventoryItems { get; set; }
