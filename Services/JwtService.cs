@@ -12,7 +12,7 @@ public class JwtService
         _configuration = configuration;
     }
 
-    public string GenerateToken(ApplicationUser user, string role = null)
+    public string GenerateToken(ApplicationUser user, string[] roles = null)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
@@ -23,10 +23,13 @@ public class JwtService
             new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
-        if (!string.IsNullOrEmpty(role))
+        if (roles != null)
         {
-            var roleClaim = new Claim(ClaimTypes.Role, role);
-            claims = claims.Append(roleClaim).ToArray();
+            foreach (var role in roles)
+            {
+                var roleClaim = new Claim(ClaimTypes.Role, role);
+                claims = claims.Append(roleClaim).ToArray();
+            }
         }
 
         var token = new JwtSecurityToken(

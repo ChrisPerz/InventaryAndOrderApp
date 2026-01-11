@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,32 @@ builder.Services.AddAuthorization();
 // Add Memory Cache for better performance
 builder.Services.AddMemoryCache();
 
+// Add Rate Limiter service
+builder.Services.AddRateLimiter(options =>
+{
+    // Apply a global limiter to ALL endpoints
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        // Partition by client IP address (each IP has its own quota)
+        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        // Use a fixed window limiter (simple sliding window)
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: clientIp,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,                  // Allow max 10 requests
+                Window = TimeSpan.FromSeconds(30), // Per 30-second window
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst, // Oldest requests processed first
+                QueueLimit = 2                     // Allow 2 requests to wait in queue
+            });
+    });
+
+    // Status code returned when limit is exceeded
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
+
 
 var app = builder.Build();
 
@@ -77,6 +104,9 @@ using (var scope = app.Services.CreateScope())
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+// Enable Rate Limiter middleware
+app.UseRateLimiter();
+
 
 app.MapControllers();
 

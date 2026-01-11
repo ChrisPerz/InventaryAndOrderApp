@@ -43,39 +43,34 @@ public class AuthController : ControllerBase
         }
         return BadRequest("Failed to add role.");
     }
-    // [HttpPost("login")]
-    // public async Task<IActionResult> Login([FromBody] RegisterModel model)
-    // {
-    //     var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
-    //     if (result.Succeeded)
-    //     {
-    //         var user = await _userManager.FindByEmailAsync(model.Email);
-    //         var token = _jwtService.GenerateToken(user);
 
-    //         return Ok(token);
-    //     }
-    //     return Unauthorized();
-    // }
-
-     [HttpPost("login")]
+    [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
         {
-            var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-            var token = _jwtService.GenerateToken(user, role);
+            var roles = (await _userManager.GetRolesAsync(user)).ToArray();
+            var token = _jwtService.GenerateToken(user, roles);
             return Ok(new { Token = token });
         }
         return Unauthorized();
     }
 
+
     [HttpGet("getUsers")]
     public async Task<IActionResult> GetUsers()
     {
-        var users = await _userManager.Users.Select(u => new { u.UserName, u.Email, u.Id }).ToListAsync();
-        // var users = await _userManager.Users.ToListAsync();
+        var users = await _userManager.Users.ToListAsync();
 
-        return Ok(users);
+        var userDtos = await Task.WhenAll(users.Select(async u => new
+        {
+            u.UserName,
+            u.Email,
+            u.Id,
+            Roles = await _userManager.GetRolesAsync(u)
+        }));
+
+        return Ok(userDtos);
     }
 }
