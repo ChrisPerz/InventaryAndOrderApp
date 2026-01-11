@@ -45,6 +45,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+// Add Memory Cache for better performance
+builder.Services.AddMemoryCache();
+
 
 var app = builder.Build();
 

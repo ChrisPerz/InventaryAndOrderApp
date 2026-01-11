@@ -73,8 +73,8 @@ public class AuthController : ControllerBase
     [HttpGet("getUsers")]
     public async Task<IActionResult> GetUsers()
     {
-        // var users = await _userManager.Users.Select(u => u.UserName).ToListAsync();
-        var users = await _userManager.Users.ToListAsync();
+        var users = await _userManager.Users.Select(u => new { u.UserName, u.Email, u.Id }).ToListAsync();
+        // var users = await _userManager.Users.ToListAsync();
 
         return Ok(users);
     }
